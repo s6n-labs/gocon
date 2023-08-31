@@ -14,13 +14,8 @@ func Autowire[T any]() Resolver[T] {
 	return &autowire[T]{}
 }
 
-func (r *autowire[T]) Resolve(ctx context.Context) (T, error) {
+func (r *autowire[T]) Resolve(ctx context.Context, c Container) (T, error) {
 	var zero T
-
-	c := FromContext(ctx)
-	if c == nil {
-		return zero, ErrNoContainer
-	}
 
 	rv, err := resolveAutowire(ctx, c, reflect.TypeOf(zero))
 	if err != nil {
@@ -64,7 +59,7 @@ func resolveAutowire(ctx context.Context, c Container, rt reflect.Type) (*reflec
 			return nil, err
 		}
 
-		v, err := def.Resolve(ctx)
+		v, err := def.Resolve(ctx, c)
 		if err != nil {
 			return nil, err
 		}

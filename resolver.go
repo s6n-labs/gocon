@@ -5,7 +5,7 @@ import (
 )
 
 type Resolver[T any] interface {
-	Resolve(ctx context.Context) (T, error)
+	Resolve(ctx context.Context, c Container) (T, error)
 }
 
 type value[T any] struct {
@@ -18,6 +18,6 @@ func Value[T any](v T) Resolver[T] {
 	}
 }
 
-func (r *value[T]) Resolve(context.Context) (T, error) {
+func (r *value[T]) Resolve(context.Context, Container) (T, error) {
 	return r.v, nil
 }

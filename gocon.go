@@ -30,12 +30,7 @@ func keyOf[T any]() string {
 	return keyOfReflected(reflect.TypeOf(zero))
 }
 
-func GetDefinition[T any](ctx context.Context) (*Definition[T], error) {
-	c := FromContext(ctx)
-	if c == nil {
-		return nil, ErrNoContainer
-	}
-
+func GetDefinitionFrom[T any](c Container) (*Definition[T], error) {
 	r, err := c.get(keyOf[T]())
 	if err != nil {
 		return nil, err
@@ -49,14 +44,33 @@ func GetDefinition[T any](ctx context.Context) (*Definition[T], error) {
 	return def, nil
 }
 
-func Get[T any](ctx context.Context) (T, error) {
-	def, err := GetDefinition[T](ctx)
+func GetDefinition[T any](ctx context.Context) (*Definition[T], error) {
+	c := FromContext(ctx)
+	if c == nil {
+		return nil, ErrNoContainer
+	}
+
+	return GetDefinitionFrom[T](c)
+}
+
+func GetFrom[T any](ctx context.Context, c Container) (T, error) {
+	def, err := GetDefinitionFrom[T](c)
 	if err != nil {
 		var zero T
 		return zero, err
 	}
 
-	return def.Resolver.Resolve(ctx)
+	return def.Resolver.Resolve(ctx, c)
+}
+
+func Get[T any](ctx context.Context) (T, error) {
+	c := FromContext(ctx)
+	if c == nil {
+		var zero T
+		return zero, ErrNoContainer
+	}
+
+	return GetFrom[T](ctx, c)
 }
 
 func GetTaggedDefinitions(ctx context.Context, tag string) ([]AnyDefinition, error) {
@@ -73,7 +87,7 @@ func GetTaggedDefinitions(ctx context.Context, tag string) ([]AnyDefinition, err
 	return anyDefs, nil
 }
 
-func GetTagged[I any](ctx context.Context, tag string) ([]I, error) {
+func GetTaggedFrom[I any](ctx context.Context, c Container, tag string) ([]I, error) {
 	defs, err := GetTaggedDefinitions(ctx, tag)
 	if err != nil {
 		return nil, err
@@ -81,7 +95,7 @@ func GetTagged[I any](ctx context.Context, tag string) ([]I, error) {
 
 	values := make([]I, 0, len(defs))
 	for _, def := range defs {
-		v, err := ResolveAs[I](ctx, def)
+		v, err := ResolveAs[I](ctx, c, def)
 		if err != nil {
 			return nil, err
 		}
@@ -90,6 +104,15 @@ func GetTagged[I any](ctx context.Context, tag string) ([]I, error) {
 	}
 
 	return values, nil
+}
+
+func GetTagged[I any](ctx context.Context, tag string) ([]I, error) {
+	c := FromContext(ctx)
+	if c == nil {
+		return nil, ErrNoContainer
+	}
+
+	return GetTaggedFrom[I](ctx, c, tag)
 }
 
 func Set[T any](ctx context.Context, resolver Resolver[T], tags ...string) error {

@@ -29,7 +29,7 @@ func TestAutowire(t *testing.T) {
 
 	require.NoError(t, gocon.Set(ctx, gocon.Value(Namer{name: "John"})))
 
-	greeter, err := gocon.Autowire[NamedGreeter]().Resolve(ctx)
+	greeter, err := gocon.Autowire[NamedGreeter]().Resolve(ctx, container)
 	require.NoError(t, err)
 	assert.Equal(t, "Hello, John!", greeter.Greet())
 }
