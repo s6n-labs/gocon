@@ -59,8 +59,12 @@ func ResolveTagged[I any](ctx context.Context, c Container, tag string) ([]I, er
 	return values, nil
 }
 
+func GetFrom[T any](ctx context.Context, c Container) (T, error) {
+	return Resolve[T](ctx, c, KeyOf[T]())
+}
+
 func Get[T any](ctx context.Context) (T, error) {
-	return Resolve[T](ctx, FromContext(ctx), KeyOf[T]())
+	return GetFrom[T](ctx, FromContext(ctx))
 }
 
 func GetBy[T any](ctx context.Context, key string) (T, error) {

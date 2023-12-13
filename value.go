@@ -1,7 +1,6 @@
 package gocon
 
 import (
-	"context"
 	"reflect"
 )
 
@@ -13,8 +12,5 @@ func Value[T any](v T) *Definition {
 		Key:   keyOf(rt),
 		Type:  rt,
 		Value: &rv,
-		resolveFunc: func(ctx context.Context, c Container) (*reflect.Value, error) {
-			return &rv, nil
-		},
 	}
 }
