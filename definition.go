@@ -6,16 +6,33 @@ import (
 )
 
 type Definition struct {
-	Key     string
-	Type    reflect.Type
-	Tags    []string
-	Resolve func(ctx context.Context, c Container) (*reflect.Value, error)
+	Key   string
+	Tags  []string
+	Type  reflect.Type
+	Value *reflect.Value
+
+	resolveFunc func(ctx context.Context, c Container) (*reflect.Value, error)
 }
 
 func (d *Definition) WithTags(tags ...string) *Definition {
 	d.Tags = tags
 
 	return d
+}
+
+func (d *Definition) Resolve(ctx context.Context, c Container) (*reflect.Value, error) {
+	if d.Value != nil {
+		return d.Value, nil
+	}
+
+	rv, err := d.resolveFunc(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+
+	d.Value = rv
+
+	return rv, nil
 }
 
 func resolve[T any](ctx context.Context, c Container) (*reflect.Value, error) {

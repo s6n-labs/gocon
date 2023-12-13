@@ -16,7 +16,7 @@ func Autowire[T any]() *Definition {
 	return &Definition{
 		Key:  keyOf(rt),
 		Type: rt,
-		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+		resolveFunc: func(ctx context.Context, c Container) (*reflect.Value, error) {
 			return resolveAutowire(ctx, c, rt)
 		},
 	}

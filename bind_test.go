@@ -14,8 +14,8 @@ func TestBind(t *testing.T) {
 	container := gocon.NewContainer(nil)
 	ctx := gocon.WithContainer(context.Background(), container)
 
-	require.NoError(t, gocon.Set(ctx, gocon.Value(Greeter{message: "Hello, world!"})))
-	require.NoError(t, gocon.Set(ctx, gocon.Bind[Greeter, GreeterLike]()))
+	require.NoError(t, gocon.Set(ctx, gocon.Value(&Greeter{message: "Hello, world!"})))
+	require.NoError(t, gocon.Set(ctx, gocon.Bind[*Greeter, GreeterLike]()))
 
 	greeter, err := gocon.Get[GreeterLike](ctx)
 	require.NoError(t, err)

@@ -10,9 +10,10 @@ func Value[T any](v T) *Definition {
 	rt := rv.Type()
 
 	return &Definition{
-		Key:  keyOf(rt),
-		Type: rt,
-		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+		Key:   keyOf(rt),
+		Type:  rt,
+		Value: &rv,
+		resolveFunc: func(ctx context.Context, c Container) (*reflect.Value, error) {
 			return &rv, nil
 		},
 	}

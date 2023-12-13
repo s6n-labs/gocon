@@ -8,9 +8,7 @@ type Container interface {
 	Get(key string) (*Definition, error)
 	GetTagged(tag string) ([]*Definition, error)
 	Set(def *Definition) error
-	lock() error
-	unlock() error
-	parent() Container
+	DisposeAll()
 }
 
 type unsafeContainer struct {
@@ -71,16 +69,14 @@ func (c *unsafeContainer) Set(def *Definition) error {
 	return nil
 }
 
-func (c *unsafeContainer) lock() error {
-	return nil
-}
+func (c *unsafeContainer) DisposeAll() {
+	for _, def := range c.services {
+		if def.Value == nil {
+			continue
+		}
 
-func (c *unsafeContainer) unlock() error {
-	return nil
-}
-
-func (c *unsafeContainer) parent() Container {
-	return c.inherit
+		dispose(*def.Value)
+	}
 }
 
 type container struct {
@@ -114,16 +110,4 @@ func (c *container) Set(def *Definition) error {
 	defer c.mutex.Unlock()
 
 	return c.unsafeContainer.Set(def)
-}
-
-func (c *container) lock() error {
-	c.mutex.Lock()
-
-	return nil
-}
-
-func (c *container) unlock() error {
-	c.mutex.Unlock()
-
-	return nil
 }

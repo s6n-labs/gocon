@@ -13,7 +13,7 @@ func Bind[T, I any]() *Definition {
 	return &Definition{
 		Key:  keyOf(typeOf[I]()),
 		Type: rt,
-		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+		resolveFunc: func(ctx context.Context, c Container) (*reflect.Value, error) {
 			def, err := c.Get(keyOf(rt))
 			if err != nil {
 				return nil, err

@@ -12,18 +12,23 @@ import (
 )
 
 type Greeter struct {
-	message string
+	message  string
+	disposed bool
 }
 
-func (g Greeter) Greet() string {
+func (g *Greeter) Greet() string {
 	return g.message
+}
+
+func (g *Greeter) Dispose() {
+	g.disposed = true
 }
 
 type AnotherGreeter struct {
 	name string
 }
 
-func (g AnotherGreeter) Greet() string {
+func (g *AnotherGreeter) Greet() string {
 	return fmt.Sprintf("Hello, %s!", g.name)
 }
 
@@ -35,15 +40,15 @@ func Test_SimpleGetSet(t *testing.T) {
 	container := gocon.NewContainer(nil)
 	ctx := gocon.WithContainer(context.Background(), container)
 
-	greeter := Greeter{message: "Hello, world!"}
+	greeter := &Greeter{message: "Hello, world!"}
 	err := gocon.Set(ctx, gocon.Value(greeter))
 	require.NoError(t, err)
 
-	def, err := gocon.FromContext(ctx).Get(gocon.KeyOf[Greeter]())
+	def, err := gocon.FromContext(ctx).Get(gocon.KeyOf[*Greeter]())
 	require.NoError(t, err)
 	assert.Len(t, def.Tags, 0)
 
-	actual, err := gocon.Get[Greeter](ctx)
+	actual, err := gocon.Get[*Greeter](ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "Hello, world!", actual.message)
 }
@@ -52,8 +57,8 @@ func Test_TaggedGetSet(t *testing.T) {
 	container := gocon.NewContainer(nil)
 	ctx := gocon.WithContainer(context.Background(), container)
 
-	greeter1 := Greeter{message: "Hello, world!"}
-	greeter2 := AnotherGreeter{name: "John"}
+	greeter1 := &Greeter{message: "Hello, world!"}
+	greeter2 := &AnotherGreeter{name: "John"}
 
 	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter1).WithTags("greeter")))
 	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter2).WithTags("greeter")))
