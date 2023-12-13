@@ -5,9 +5,9 @@ import (
 )
 
 type Container interface {
-	get(key string) (*Definition, error)
-	getTagged(tag string) ([]*Definition, error)
-	set(def *Definition) error
+	Get(key string) (*Definition, error)
+	GetTagged(tag string) ([]*Definition, error)
+	Set(def *Definition) error
 	lock() error
 	unlock() error
 	parent() Container
@@ -27,7 +27,7 @@ func newUnsafeContainer(inherit Container) *unsafeContainer {
 	}
 }
 
-func (c *unsafeContainer) get(key string) (*Definition, error) {
+func (c *unsafeContainer) Get(key string) (*Definition, error) {
 	service, ok := c.services[key]
 	if !ok {
 		return nil, ErrServiceNotFound
@@ -36,7 +36,7 @@ func (c *unsafeContainer) get(key string) (*Definition, error) {
 	return service, nil
 }
 
-func (c *unsafeContainer) getTagged(tag string) ([]*Definition, error) {
+func (c *unsafeContainer) GetTagged(tag string) ([]*Definition, error) {
 	tagged, ok := c.tags[tag]
 	if !ok {
 		return make([]*Definition, 0), nil
@@ -55,7 +55,7 @@ func (c *unsafeContainer) getTagged(tag string) ([]*Definition, error) {
 	return defs, nil
 }
 
-func (c *unsafeContainer) set(def *Definition) error {
+func (c *unsafeContainer) Set(def *Definition) error {
 	c.services[def.Key] = def
 
 	for _, t := range def.Tags {
@@ -95,25 +95,25 @@ func NewContainer(inherit Container) Container {
 	}
 }
 
-func (c *container) get(key string) (*Definition, error) {
+func (c *container) Get(key string) (*Definition, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return c.unsafeContainer.get(key)
+	return c.unsafeContainer.Get(key)
 }
 
-func (c *container) getTagged(tag string) ([]*Definition, error) {
+func (c *container) GetTagged(tag string) ([]*Definition, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	return c.unsafeContainer.getTagged(tag)
+	return c.unsafeContainer.GetTagged(tag)
 }
 
-func (c *container) set(def *Definition) error {
+func (c *container) Set(def *Definition) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	return c.unsafeContainer.set(def)
+	return c.unsafeContainer.Set(def)
 }
 
 func (c *container) lock() error {

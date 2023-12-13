@@ -46,7 +46,7 @@ func resolveAutowire(ctx context.Context, c Container, rt reflect.Type) (*reflec
 			continue
 		}
 
-		def, err := c.get(keyOf(field.Type))
+		def, err := c.Get(keyOf(field.Type))
 		if err != nil {
 			if errors.Is(err, ErrServiceNotFound) {
 				return resolveAutowire(ctx, c, field.Type)

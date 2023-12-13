@@ -39,7 +39,7 @@ func Test_SimpleGetSet(t *testing.T) {
 	err := gocon.Set(ctx, gocon.Value(greeter))
 	require.NoError(t, err)
 
-	def, err := gocon.GetDefinition[Greeter](ctx)
+	def, err := gocon.FromContext(ctx).Get(gocon.KeyOf[Greeter]())
 	require.NoError(t, err)
 	assert.Len(t, def.Tags, 0)
 
@@ -58,7 +58,7 @@ func Test_TaggedGetSet(t *testing.T) {
 	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter1).WithTags("greeter")))
 	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter2).WithTags("greeter")))
 
-	defs, err := gocon.GetTaggedDefinitions(ctx, "greeter")
+	defs, err := gocon.FromContext(ctx).GetTagged("greeter")
 	require.NoError(t, err)
 	assert.Len(t, defs, 2)
 

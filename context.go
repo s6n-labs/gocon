@@ -13,7 +13,7 @@ func WithContainer(ctx context.Context, container Container) context.Context {
 func FromContext(ctx context.Context) Container {
 	c, ok := ctx.Value(contextKeyContainer{}).(Container)
 	if !ok {
-		return nil
+		return NewContainer(nil)
 	}
 
 	return c

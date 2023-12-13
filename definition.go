@@ -2,7 +2,6 @@ package gocon
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 )
 
@@ -19,7 +18,16 @@ func (d *Definition) WithTags(tags ...string) *Definition {
 	return d
 }
 
-func ResolveAs[T any](ctx context.Context, c Container, def *Definition) (T, error) {
+func resolve[T any](ctx context.Context, c Container) (*reflect.Value, error) {
+	def, err := c.Get(keyOf(typeOf[T]()))
+	if err != nil {
+		return nil, err
+	}
+
+	return def.Resolve(ctx, c)
+}
+
+func resolveAs[T any](ctx context.Context, c Container, def *Definition) (T, error) {
 	var zero T
 
 	rv, err := def.Resolve(ctx, c)
@@ -29,8 +37,6 @@ func ResolveAs[T any](ctx context.Context, c Container, def *Definition) (T, err
 
 	v, ok := rv.Interface().(T)
 	if !ok {
-		fmt.Printf("Type: %T\n", rv.Interface())
-
 		return zero, ErrServiceNotFound
 	}
 

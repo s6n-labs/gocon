@@ -14,7 +14,7 @@ func Bind[T, I any]() *Definition {
 		Key:  keyOf(typeOf[I]()),
 		Type: rt,
 		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
-			def, err := c.get(keyOf(rt))
+			def, err := c.Get(keyOf(rt))
 			if err != nil {
 				return nil, err
 			}
