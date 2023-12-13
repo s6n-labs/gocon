@@ -11,7 +11,8 @@ type Definition struct {
 	Type  reflect.Type
 	Value *reflect.Value
 
-	resolveFunc func(ctx context.Context, c Container) (*reflect.Value, error)
+	configureFunc func(c Container) error
+	resolveFunc   func(ctx context.Context, c Container) (*reflect.Value, error)
 }
 
 func (d *Definition) WithTags(tags ...string) *Definition {

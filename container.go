@@ -8,6 +8,7 @@ type Container interface {
 	Get(key string) (*Definition, error)
 	GetTagged(tag string) ([]*Definition, error)
 	Set(def *Definition) error
+	All() []*Definition
 	DisposeAll()
 }
 
@@ -56,6 +57,12 @@ func (c *unsafeContainer) GetTagged(tag string) ([]*Definition, error) {
 func (c *unsafeContainer) Set(def *Definition) error {
 	c.services[def.Key] = def
 
+	if def.configureFunc != nil {
+		if err := def.configureFunc(c); err != nil {
+			return err
+		}
+	}
+
 	for _, t := range def.Tags {
 		tagged, ok := c.tags[t]
 		if !ok {
@@ -69,8 +76,17 @@ func (c *unsafeContainer) Set(def *Definition) error {
 	return nil
 }
 
-func (c *unsafeContainer) DisposeAll() {
+func (c *unsafeContainer) All() []*Definition {
+	defs := make([]*Definition, 0, len(c.services))
 	for _, def := range c.services {
+		defs = append(defs, def)
+	}
+
+	return defs
+}
+
+func (c *unsafeContainer) DisposeAll() {
+	for _, def := range c.All() {
 		if def.Value == nil {
 			continue
 		}
@@ -110,4 +126,18 @@ func (c *container) Set(def *Definition) error {
 	defer c.mutex.Unlock()
 
 	return c.unsafeContainer.Set(def)
+}
+
+func (c *container) All() []*Definition {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.unsafeContainer.All()
+}
+
+func (c *container) DisposeAll() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.unsafeContainer.DisposeAll()
 }
