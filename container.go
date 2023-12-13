@@ -5,29 +5,29 @@ import (
 )
 
 type Container interface {
-	get(key string) (AnyDefinition, error)
-	getTagged(tag string) ([]AnyDefinition, error)
-	set(key string, def AnyDefinition) error
+	get(key string) (*Definition, error)
+	getTagged(tag string) ([]*Definition, error)
+	set(def *Definition) error
 	lock() error
 	unlock() error
 	parent() Container
 }
 
 type unsafeContainer struct {
-	services map[string]AnyDefinition
+	services map[string]*Definition
 	tags     map[string]map[string]struct{}
 	inherit  Container
 }
 
 func newUnsafeContainer(inherit Container) *unsafeContainer {
 	return &unsafeContainer{
-		services: make(map[string]AnyDefinition),
+		services: make(map[string]*Definition),
 		tags:     make(map[string]map[string]struct{}),
 		inherit:  inherit,
 	}
 }
 
-func (c *unsafeContainer) get(key string) (AnyDefinition, error) {
+func (c *unsafeContainer) get(key string) (*Definition, error) {
 	service, ok := c.services[key]
 	if !ok {
 		return nil, ErrServiceNotFound
@@ -36,13 +36,13 @@ func (c *unsafeContainer) get(key string) (AnyDefinition, error) {
 	return service, nil
 }
 
-func (c *unsafeContainer) getTagged(tag string) ([]AnyDefinition, error) {
+func (c *unsafeContainer) getTagged(tag string) ([]*Definition, error) {
 	tagged, ok := c.tags[tag]
 	if !ok {
-		return make([]AnyDefinition, 0), nil
+		return make([]*Definition, 0), nil
 	}
 
-	defs := make([]AnyDefinition, 0, len(tagged))
+	defs := make([]*Definition, 0, len(tagged))
 	for t := range tagged {
 		def, ok := c.services[t]
 		if !ok {
@@ -55,17 +55,17 @@ func (c *unsafeContainer) getTagged(tag string) ([]AnyDefinition, error) {
 	return defs, nil
 }
 
-func (c *unsafeContainer) set(key string, def AnyDefinition) error {
-	c.services[key] = def
+func (c *unsafeContainer) set(def *Definition) error {
+	c.services[def.Key] = def
 
-	for _, t := range def.GetTags() {
+	for _, t := range def.Tags {
 		tagged, ok := c.tags[t]
 		if !ok {
 			tagged = make(map[string]struct{})
 			c.tags[t] = tagged
 		}
 
-		tagged[key] = struct{}{}
+		tagged[def.Key] = struct{}{}
 	}
 
 	return nil
@@ -95,25 +95,25 @@ func NewContainer(inherit Container) Container {
 	}
 }
 
-func (c *container) get(key string) (AnyDefinition, error) {
+func (c *container) get(key string) (*Definition, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	return c.unsafeContainer.get(key)
 }
 
-func (c *container) getTagged(tag string) ([]AnyDefinition, error) {
+func (c *container) getTagged(tag string) ([]*Definition, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	return c.unsafeContainer.getTagged(tag)
 }
 
-func (c *container) set(key string, def AnyDefinition) error {
+func (c *container) set(def *Definition) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	return c.unsafeContainer.set(key, def)
+	return c.unsafeContainer.set(def)
 }
 
 func (c *container) lock() error {

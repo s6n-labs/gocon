@@ -2,22 +2,18 @@ package gocon
 
 import (
 	"context"
+	"reflect"
 )
 
-type Resolver[T any] interface {
-	Resolve(ctx context.Context, c Container) (T, error)
-}
+func Value[T any](v T) *Definition {
+	rv := reflect.ValueOf(v)
+	rt := rv.Type()
 
-type value[T any] struct {
-	v T
-}
-
-func Value[T any](v T) Resolver[T] {
-	return &value[T]{
-		v: v,
+	return &Definition{
+		Key:  keyOf(rt),
+		Type: rt,
+		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+			return &rv, nil
+		},
 	}
-}
-
-func (r *value[T]) Resolve(context.Context, Container) (T, error) {
-	return r.v, nil
 }

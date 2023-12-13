@@ -5,24 +5,21 @@ import (
 	"reflect"
 )
 
-type bind[T, I any] struct{}
+func Bind[T, I any]() *Definition {
+	var zero T
 
-func Bind[T, I any]() Resolver[I] {
-	return &bind[T, I]{}
-}
+	rt := reflect.TypeOf(zero)
 
-func (r *bind[T, I]) Resolve(ctx context.Context, c Container) (I, error) {
-	var zero I
+	return &Definition{
+		Key:  keyOf(typeOf[I]()),
+		Type: rt,
+		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+			def, err := c.get(keyOf(rt))
+			if err != nil {
+				return nil, err
+			}
 
-	v, err := GetFrom[T](ctx, c)
-	if err != nil {
-		return zero, err
+			return def.Resolve(ctx, c)
+		},
 	}
-
-	i, ok := reflect.ValueOf(v).Interface().(I)
-	if !ok {
-		return zero, ErrServiceNotFound
-	}
-
-	return i, nil
 }

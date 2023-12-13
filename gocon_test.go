@@ -41,7 +41,6 @@ func Test_SimpleGetSet(t *testing.T) {
 
 	def, err := gocon.GetDefinition[Greeter](ctx)
 	require.NoError(t, err)
-	assert.Implements(t, new(gocon.Resolver[Greeter]), def.Resolver)
 	assert.Len(t, def.Tags, 0)
 
 	actual, err := gocon.Get[Greeter](ctx)
@@ -56,8 +55,8 @@ func Test_TaggedGetSet(t *testing.T) {
 	greeter1 := Greeter{message: "Hello, world!"}
 	greeter2 := AnotherGreeter{name: "John"}
 
-	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter1), "greeter"))
-	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter2), "greeter"))
+	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter1).WithTags("greeter")))
+	require.NoError(t, gocon.Set(ctx, gocon.Value(greeter2).WithTags("greeter")))
 
 	defs, err := gocon.GetTaggedDefinitions(ctx, "greeter")
 	require.NoError(t, err)

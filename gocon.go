@@ -12,7 +12,11 @@ var (
 	ErrServiceNotFound = errors.New("service does not exist, or cannot be resolved")
 )
 
-func keyOfReflected(rt reflect.Type) string {
+func typeOf[T any]() reflect.Type {
+	return reflect.TypeOf((*T)(nil)).Elem()
+}
+
+func keyOf(rt reflect.Type) string {
 	name := rt.String()
 	path := rt.PkgPath()
 	parts := strings.Split(path, "/")
@@ -25,26 +29,16 @@ func keyOfReflected(rt reflect.Type) string {
 	return path + "." + name
 }
 
-func keyOf[T any]() string {
-	var zero T
-	return keyOfReflected(reflect.TypeOf(zero))
-}
-
-func GetDefinitionFrom[T any](c Container) (*Definition[T], error) {
-	r, err := c.get(keyOf[T]())
+func GetDefinitionFrom[T any](c Container) (*Definition, error) {
+	def, err := c.get(keyOf(typeOf[T]()))
 	if err != nil {
 		return nil, err
-	}
-
-	def, ok := r.(*Definition[T])
-	if !ok {
-		panic("BUG: type mismatch")
 	}
 
 	return def, nil
 }
 
-func GetDefinition[T any](ctx context.Context) (*Definition[T], error) {
+func GetDefinition[T any](ctx context.Context) (*Definition, error) {
 	c := FromContext(ctx)
 	if c == nil {
 		return nil, ErrNoContainer
@@ -60,7 +54,7 @@ func GetFrom[T any](ctx context.Context, c Container) (T, error) {
 		return zero, err
 	}
 
-	return def.Resolver.Resolve(ctx, c)
+	return ResolveAs[T](ctx, c, def)
 }
 
 func Get[T any](ctx context.Context) (T, error) {
@@ -73,7 +67,7 @@ func Get[T any](ctx context.Context) (T, error) {
 	return GetFrom[T](ctx, c)
 }
 
-func GetTaggedDefinitions(ctx context.Context, tag string) ([]AnyDefinition, error) {
+func GetTaggedDefinitions(ctx context.Context, tag string) ([]*Definition, error) {
 	c := FromContext(ctx)
 	if c == nil {
 		return nil, ErrNoContainer
@@ -115,14 +109,11 @@ func GetTagged[I any](ctx context.Context, tag string) ([]I, error) {
 	return GetTaggedFrom[I](ctx, c, tag)
 }
 
-func Set[T any](ctx context.Context, resolver Resolver[T], tags ...string) error {
+func Set(ctx context.Context, def *Definition) error {
 	c := FromContext(ctx)
 	if c == nil {
 		return ErrNoContainer
 	}
 
-	return c.set(keyOf[T](), &Definition[T]{
-		Resolver: resolver,
-		Tags:     tags,
-	})
+	return c.set(def)
 }

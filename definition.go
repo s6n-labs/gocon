@@ -2,48 +2,35 @@ package gocon
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 )
 
-type Definition[T any] struct {
-	Resolver Resolver[T]
-	Tags     []string
+type Definition struct {
+	Key     string
+	Type    reflect.Type
+	Tags    []string
+	Resolve func(ctx context.Context, c Container) (*reflect.Value, error)
 }
 
-type AnyDefinition interface {
-	Resolve(ctx context.Context, c Container) (any, error)
-	GetTags() []string
+func (d *Definition) WithTags(tags ...string) *Definition {
+	d.Tags = tags
 
-	asAnyDefinition() AnyDefinition
-}
-
-func (d *Definition[T]) reflectType() reflect.Type {
-	var zero T
-	return reflect.TypeOf(zero)
-}
-
-func (d *Definition[T]) asAnyDefinition() AnyDefinition {
 	return d
 }
 
-func (d *Definition[T]) Resolve(ctx context.Context, c Container) (any, error) {
-	return d.Resolver.Resolve(ctx, c)
-}
+func ResolveAs[T any](ctx context.Context, c Container, def *Definition) (T, error) {
+	var zero T
 
-func (d *Definition[T]) GetTags() []string {
-	return d.Tags
-}
-
-func ResolveAs[I any](ctx context.Context, c Container, def AnyDefinition) (I, error) {
-	var zero I
-
-	anyValue, err := def.Resolve(ctx, c)
+	rv, err := def.Resolve(ctx, c)
 	if err != nil {
 		return zero, err
 	}
 
-	v, ok := anyValue.(I)
+	v, ok := rv.Interface().(T)
 	if !ok {
+		fmt.Printf("Type: %T\n", rv.Interface())
+
 		return zero, ErrServiceNotFound
 	}
 

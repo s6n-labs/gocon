@@ -8,26 +8,18 @@ import (
 
 var ErrNotStruct = errors.New("autowire only supports structs")
 
-type autowire[T any] struct{}
-
-func Autowire[T any]() Resolver[T] {
-	return &autowire[T]{}
-}
-
-func (r *autowire[T]) Resolve(ctx context.Context, c Container) (T, error) {
+func Autowire[T any]() *Definition {
 	var zero T
 
-	rv, err := resolveAutowire(ctx, c, reflect.TypeOf(zero))
-	if err != nil {
-		return zero, err
-	}
+	rt := reflect.TypeOf(zero)
 
-	v, ok := rv.Interface().(T)
-	if !ok {
-		panic("BUG: type mismatch")
+	return &Definition{
+		Key:  keyOf(rt),
+		Type: rt,
+		Resolve: func(ctx context.Context, c Container) (*reflect.Value, error) {
+			return resolveAutowire(ctx, c, rt)
+		},
 	}
-
-	return v, nil
 }
 
 func resolveAutowire(ctx context.Context, c Container, rt reflect.Type) (*reflect.Value, error) {
@@ -54,8 +46,12 @@ func resolveAutowire(ctx context.Context, c Container, rt reflect.Type) (*reflec
 			continue
 		}
 
-		def, err := c.get(keyOfReflected(field.Type))
+		def, err := c.get(keyOf(field.Type))
 		if err != nil {
+			if errors.Is(err, ErrServiceNotFound) {
+				return resolveAutowire(ctx, c, field.Type)
+			}
+
 			return nil, err
 		}
 
@@ -64,7 +60,7 @@ func resolveAutowire(ctx context.Context, c Container, rt reflect.Type) (*reflec
 			return nil, err
 		}
 
-		rv.Field(i).Set(reflect.ValueOf(v))
+		rv.Field(i).Set(*v)
 	}
 
 	return &rv, nil
