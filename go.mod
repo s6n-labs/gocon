@@ -1,4 +1,4 @@
-module github.com/siketyan/gocon
+module github.com/s6n-labs/gocon
 
 go 1.21
 
