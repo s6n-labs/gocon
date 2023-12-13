@@ -2,12 +2,9 @@ package gocon
 
 import (
 	"context"
-	"errors"
 	"reflect"
 	"strings"
 )
-
-var ErrServiceNotFound = errors.New("service does not exist, or cannot be resolved")
 
 func typeOf[T any]() reflect.Type {
 	return reflect.TypeOf((*T)(nil)).Elem()

@@ -1,8 +1,17 @@
 package gocon
 
 import (
+	"fmt"
 	"sync"
 )
+
+type ServiceNotFoundError struct {
+	key string
+}
+
+func (e ServiceNotFoundError) Error() string {
+	return fmt.Sprintf("service '%s' does not exist, or cannot be resolved", e.key)
+}
 
 type Container interface {
 	Get(key string) (*Definition, error)
@@ -29,7 +38,9 @@ func newUnsafeContainer(inherit Container) *unsafeContainer {
 func (c *unsafeContainer) Get(key string) (*Definition, error) {
 	service, ok := c.services[key]
 	if !ok {
-		return nil, ErrServiceNotFound
+		return nil, ServiceNotFoundError{
+			key: key,
+		}
 	}
 
 	return service, nil

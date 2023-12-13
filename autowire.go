@@ -27,7 +27,7 @@ func autowire(rt reflect.Type) *Definition {
 				for i := 0; i < rt.NumField(); i++ {
 					ft := rt.Field(i).Type
 
-					if _, err := c.Get(keyOf(ft)); err == nil || !errors.Is(err, ErrServiceNotFound) {
+					if _, err := c.Get(keyOf(ft)); err == nil || !errors.As(err, new(ServiceNotFoundError)) {
 						continue
 					}
 

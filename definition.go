@@ -55,7 +55,9 @@ func resolveAs[T any](ctx context.Context, c Container, def *Definition) (T, err
 
 	v, ok := rv.Interface().(T)
 	if !ok {
-		return zero, ErrServiceNotFound
+		return zero, ServiceNotFoundError{
+			key: KeyOf[T](),
+		}
 	}
 
 	return v, nil
