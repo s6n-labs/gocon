@@ -36,6 +36,13 @@ type GreeterLike interface {
 	Greet() string
 }
 
+func TestKeyOf(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "github.com/s6n-labs/gocon_test.Greeter", gocon.KeyOf[Greeter]())
+	assert.Equal(t, "*github.com/s6n-labs/gocon_test.Greeter", gocon.KeyOf[*Greeter]())
+}
+
 func Test_SimpleGetSet(t *testing.T) {
 	container := gocon.NewContainer(nil)
 	ctx := gocon.WithContainer(context.Background(), container)

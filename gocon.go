@@ -11,6 +11,10 @@ func typeOf[T any]() reflect.Type {
 }
 
 func keyOf(rt reflect.Type) string {
+	if rt.Kind() == reflect.Pointer {
+		return "*" + keyOf(rt.Elem())
+	}
+
 	name := rt.String()
 	path := rt.PkgPath()
 	parts := strings.Split(path, "/")
